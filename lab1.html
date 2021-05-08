@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame()">
+
+<script>
+var platform;
+var platform2;
+var wallL, wallR, wallT, wallD;
+var ball;
+var ball2;
+var isRuning;
+
+function startGame() {
+    platform = new component(50, 20, "blue", 225, 225);
+    platform2 = new component(20, 50, "green", 50, 100);
+    wallL = new component(10, 540, "white", 0, 0);
+    wallD = new component(960, 10, "white", 0, 270);
+    wallT = new component(960, 10, "white", 0, 0);
+    wallR = new component(10, 540, "pink", 480, 0);
+    ball = new componentBall(10,10,"red",150,150);
+    ball2 = new componentBall(10,10,"red",200,150);
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('keydown', function (e) {
+            e.preventDefault();
+            myGameArea.keys = (myGameArea.keys || []);
+            myGameArea.keys[e.keyCode] = (e.type == "keydown");
+        })
+        window.addEventListener('keyup', function (e) {
+            myGameArea.keys[e.keyCode] = (e.type == "keydown");
+        })
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    },    
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+}
+
+function component(width, height, color, x, y, type) {
+
+    this.type = type;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;
+    this.angle = 0;
+    this.moveAngle = 0;
+    this.x = x;
+    this.y = y;    
+    this.update = function() {
+        ctx = myGameArea.context;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = color;
+        ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
+        ctx.restore();    
+    }
+    this.newPos = function() {
+        //this.angle += this.moveAngle * Math.PI / 180;
+        //this.x += this.speed * Math.sin(this.angle);
+        //this.y -= this.speed * Math.cos(this.angle);
+        this.x += this.speedX;
+        this.y += this.speedY;
+    }
+}
+
+function componentBall(width, height, color, x, y, type) {
+
+    this.type = type;
+    this.width = width;
+    this.height = height;
+    this.speed = 0;
+    this.angle = 0;
+    this.moveAngle = 0;
+    this.x = x;
+    this.y = y;    
+    this.update = function() {
+        ctx = myGameArea.context;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = color;
+        ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
+        ctx.restore();    
+    }
+    this.newPos = function() {
+        this.angle += this.moveAngle * Math.PI / 180;
+        this.x += this.speed * Math.sin(this.angle);
+        this.y -= this.speed * Math.cos(this.angle);
+    }
+    this.crashWith = function(otherobj) {
+    var myleft = this.x;
+    var myright = this.x + (this.width);
+    var mytop = this.y;
+    var mybottom = this.y + (this.height);
+    var otherleft = otherobj.x;
+    var otherright = otherobj.x + (otherobj.width);
+    var othertop = otherobj.y;
+    var otherbottom = otherobj.y + (otherobj.height);
+    var crash = true;
+    if ((mybottom < othertop) ||
+    (mytop > otherbottom) ||
+    (myright < otherleft) ||
+    (myleft > otherright)) {
+      crash = false;
+    }
+    return crash;
+  }
+}
+
+function updateGameArea() {
+    if (this.isRuning) {
+        if (ball.crashWith(wallD) || ball.crashWith(wallL) || ball2.crashWith(wallD) || ball2.crashWith(wallL)) {
+            myGameArea.stop();
+        } else {
+            myGameArea.clear();
+            platform.speedX = 0;
+            platform2.speedY = 0;
+            ball.speed = 0.5;
+            ball.angle = 40;
+            ball2.speed = 1;
+            ball2.angle = 120;
+
+            if (ball.crashWith(wallT) || ball.crashWith(wallR)) {
+                ball.angle = 90;
+            }
+            if (ball2.crashWith(wallT) || ball2.crashWith(wallR)) {
+                ball2.angle = 90;
+            }
+
+            if (myGameArea.keys && myGameArea.keys[37]) { moveleft(); }
+            if (myGameArea.keys && myGameArea.keys[39]) { moveright(); }
+            if (myGameArea.keys && myGameArea.keys[38]) { moveup(); }
+            if (myGameArea.keys && myGameArea.keys[40]) { movedown(); }
+
+            platform.newPos();
+            platform.update();
+            platform2.newPos();
+            platform2.update();
+
+            ball.newPos();
+            ball.update();
+            ball2.newPos();
+            ball2.update();
+
+            wallL.newPos();
+            wallL.update();
+            wallR.newPos();
+            wallR.update();
+            wallT.newPos();
+            wallT.update();
+            wallD.newPos();
+            wallD.update();
+
+            clearmove();            //ciekway efekt bez tej linijki ;)            
+        }
+
+    }
+
+}
+
+function moveup() {
+    platform2.speedY = -3; 
+}
+
+function movedown() {
+    platform2.speedY = 3; 
+}
+
+function moveleft() {
+    platform.speedX = -3; 
+}
+
+function moveright() {
+    platform.speedX = 3; 
+}
+
+function clearmove() {
+    platform.speedX = 0; 
+    platform2.speedY = 0; 
+}
+
+function start(){
+    this.isRuning = true;
+}
+
+function stop(){
+    this.isRuning = false;
+}
+</script>
+<div  style="text-align:center;width:480px;">
+    <button onmousedown="moveup()" onmouseup="clearmove()" ontouchstart="moveup()">UP</button><br><br>
+    <button onmousedown="moveleft()" onmouseup="clearmove()" ontouchstart="moveleft()">LEFT</button>
+    <button onmousedown="moveright()" onmouseup="clearmove()" ontouchstart="moveright()">RIGHT</button><br><br>
+    <button onmousedown="movedown()" onmouseup="clearmove()" ontouchstart="movedown()">DOWN</button>
+</div>
+<br><br>
+<div  style="text-align:center;width:480px;">
+    <button onmousedown="start()">Start</button>
+    <button onmousedown="stop()">Pause</button>
+</div>
+
+
+</body>
+</html>
