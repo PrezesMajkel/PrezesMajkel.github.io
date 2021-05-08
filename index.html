@@ -17,7 +17,7 @@ var platform2;
 var wallL, wallR, wallT, wallD;
 var ball;
 var ball2;
-var isRuning;
+var isRuning = true;
 
 function startGame() {
     platform = new component(50, 20, "blue", 225, 225);
@@ -25,9 +25,9 @@ function startGame() {
     wallL = new component(10, 540, "white", 0, 0);
     wallD = new component(960, 10, "white", 0, 270);
     wallT = new component(960, 10, "white", 0, 0);
-    wallR = new component(10, 540, "pink", 480, 0);
-    ball = new componentBall(10,10,"red",150,150);
-    ball2 = new componentBall(10,10,"red",200,150);
+    wallR = new component(10, 540, "white", 480, 0);
+    ball = new componentBall(10,"red",150,150);
+    ball2 = new componentBall(10,"pink",200,150);
     myGameArea.start();
 }
 
@@ -57,9 +57,8 @@ var myGameArea = {
     }
 }
 
-function component(width, height, color, x, y, type) {
+function component(width, height, color, x, y) {
 
-    this.type = type;
     this.width = width;
     this.height = height;
     this.speedX = 0;
@@ -86,24 +85,21 @@ function component(width, height, color, x, y, type) {
     }
 }
 
-function componentBall(width, height, color, x, y, type) {
+function componentBall(radius, color, x, y) {
 
-    this.type = type;
-    this.width = width;
-    this.height = height;
+    this.radius = radius;
     this.speed = 0;
-    this.angle = 0;
+    this.angle = 45 * Math.PI/180;
     this.moveAngle = 0;
     this.x = x;
     this.y = y;    
     this.update = function() {
         ctx = myGameArea.context;
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
+        ctx.beginPath();
         ctx.fillStyle = color;
-        ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
-        ctx.restore();    
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI *2)
+        ctx.fill();    
+
     }
     this.newPos = function() {
         this.angle += this.moveAngle * Math.PI / 180;
@@ -111,19 +107,14 @@ function componentBall(width, height, color, x, y, type) {
         this.y -= this.speed * Math.cos(this.angle);
     }
     this.crashWith = function(otherobj) {
-    var myleft = this.x;
-    var myright = this.x + (this.width);
-    var mytop = this.y;
-    var mybottom = this.y + (this.height);
+    var myX = this.x;
+    var myY = this.y;
     var otherleft = otherobj.x;
     var otherright = otherobj.x + (otherobj.width);
     var othertop = otherobj.y;
     var otherbottom = otherobj.y + (otherobj.height);
     var crash = true;
-    if ((mybottom < othertop) ||
-    (mytop > otherbottom) ||
-    (myright < otherleft) ||
-    (myleft > otherright)) {
+    if ((myY < othertop) || (myY > otherbottom) || (myX < otherleft) || (myX > otherright)) {
       crash = false;
     }
     return crash;
@@ -138,16 +129,14 @@ function updateGameArea() {
             myGameArea.clear();
             platform.speedX = 0;
             platform2.speedY = 0;
-            ball.speed = 0.5;
-            ball.angle = 40;
-            ball2.speed = 1;
-            ball2.angle = 120;
+            ball.speed = 2;
+            ball2.speed = 4;
 
-            if (ball.crashWith(wallT) || ball.crashWith(wallR)) {
-                ball.angle = 90;
+            if (ball.crashWith(wallT) || ball.crashWith(wallR) || ball.crashWith(platform) || ball.crashWith(platform2)) {
+                ball.angle += 90 * Math.PI/180;
             }
-            if (ball2.crashWith(wallT) || ball2.crashWith(wallR)) {
-                ball2.angle = 90;
+            if (ball2.crashWith(wallT) || ball2.crashWith(wallR) || ball2.crashWith(platform) || ball2.crashWith(platform2)) {
+                ball2.angle += 90 * Math.PI/180;
             }
 
             if (myGameArea.keys && myGameArea.keys[37]) { moveleft(); }
@@ -181,20 +170,22 @@ function updateGameArea() {
 
 }
 
+var platformsSpeed = 10;
+
 function moveup() {
-    platform2.speedY = -3; 
+    platform2.speedY = -platformsSpeed; 
 }
 
 function movedown() {
-    platform2.speedY = 3; 
+    platform2.speedY = platformsSpeed; 
 }
 
 function moveleft() {
-    platform.speedX = -3; 
+    platform.speedX = -platformsSpeed; 
 }
 
 function moveright() {
-    platform.speedX = 3; 
+    platform.speedX = platformsSpeed; 
 }
 
 function clearmove() {
