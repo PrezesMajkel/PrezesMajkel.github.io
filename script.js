@@ -1,3 +1,24 @@
+class State {
+    constructor(display, actors) {
+      this.display = display;
+      this.actors = actors;
+    }
+  
+    update(time) {
+  
+      /**
+       * provide an update ID to let actors update other actors only once
+       * used with collision detection
+       */
+      const updateId = Math.floor(Math.random() * 1000000);
+      const actors = this.actors.map(actor => {
+        return actor.update(this, time, updateId);
+      });
+
+      return new State(this.display, actors, platforms);
+    }
+}
+
 class Canvas {
     constructor(parent = document.body, width = 400, height = 400) {
         this.canvas = document.createElement('canvas');
@@ -75,6 +96,10 @@ class Vector {
         return Math.atan2(this.x, this.y);
     }
 }
+
+const random = (max = 9, min = 0) => {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+};
 
 const startGame = () => {
     const canvas = new Canvas(document.getElementById("gameDiv"), 640, 480);
